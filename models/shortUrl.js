@@ -1,26 +1,43 @@
-// models/shortUrl.js
-const mongoose = require('mongoose');
+const { MongoClient, ObjectId } = require("mongodb");
 
-const shortUrlSchema = new mongoose.Schema({
-  full: {
-    type: String,
-    required: true
-  },
-  short: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  clicks: {
-    type: Number,
-    required: true,
-    default: 0
-  },
-  // Associate each short URL with a user
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }
-});
+// Database connection
+const uri = "mongodb://localhost:27017"; // Update if using a different host
+const client = new MongoClient(uri);
+const db = client.db("urlShortener");
+const urlsCollection = db.collection("urls");
 
-module.exports = mongoose.model('ShortUrl', shortUrlSchema);
+// Function to create a new short URL
+async function createShortUrl(full, short, user) {
+    const result = await urlsCollection.insertOne({
+        full,
+        short,
+        clicks: 0,
+        user: new ObjectId(user) // Convert user ID to ObjectId
+    });
+    return result.insertedId;
+}
+
+// Function to find a short URL by its short code
+async function getShortUrl(short) {
+    return await urlsCollection.findOne({ short });
+}
+
+// Function to update click count
+async function incrementClick(short) {
+    await urlsCollection.updateOne(
+        { short },
+        { $inc: { clicks: 1 } }
+    );
+}
+
+// Function to delete a short URL
+async function deleteShortUrl(short) {
+    await urlsCollection.deleteOne({ short });
+}
+
+module.exports = {
+    createShortUrl,
+    getShortUrl,
+    incrementClick,
+    deleteShortUrl
+};
