@@ -30,6 +30,17 @@ async function getCollection(name) {
     return db.collection(name);
 }
 
+//Used ChatGpt and Google to find approach to short URL
+// Short URL Logic
+function generateShortUrl(length = 6) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let shortUrl = '';
+    for (let i = 0; i < length; i++) {
+        shortUrl += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return shortUrl;
+}
+
 // 3. Middleware & Auth Setup
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: false }));
@@ -73,7 +84,9 @@ function ensureAuthenticated(req, res, next) {
 
 // 4. Routes
 app.get('/login', (req, res) => res.render('login'));
+
 app.post('/login', passport.authenticate('local', { successRedirect: '/', failureRedirect: '/login' }));
+
 app.get('/register', (req, res) => res.render('register'));
 
 app.post('/register', async (req, res) => {
@@ -105,23 +118,16 @@ app.post('/shortUrls', ensureAuthenticated, async (req, res) => {
     const fullUrl = req.body.fullUrl;
     if (!fullUrl) return res.redirect('/');
     const shortUrls = await getCollection("urls");
-    const short = Math.random().toString(36).substring(7);
+    
+    let short;
+    let exists;
+    do {
+        short = generateShortUrl();
+        exists = await shortUrls.findOne({ short });
+    } while (exists); // Ensure uniqueness
+    
     await shortUrls.insertOne({ full: fullUrl, short, clicks: 0, user: req.user._id });
     res.redirect('/');
-});
-
-app.post('/delete/:id', ensureAuthenticated, async (req, res) => {
-    try {
-        const shortUrls = await getCollection("urls");
-        const shortUrl = await shortUrls.findOne({ _id: new ObjectId(req.params.id) });
-        if (!shortUrl || shortUrl.user.toString() !== req.user._id.toString()) {
-            return res.status(403).send("Unauthorized");
-        }
-        await shortUrls.deleteOne({ _id: new ObjectId(req.params.id) });
-        res.redirect('/');
-    } catch (err) {
-        res.status(500).send("Error deleting the URL");
-    }
 });
 
 app.get('/:shortUrl', async (req, res) => {
@@ -129,7 +135,10 @@ app.get('/:shortUrl', async (req, res) => {
         const shortUrls = await getCollection("urls");
         const shortUrl = await shortUrls.findOne({ short: req.params.shortUrl });
         if (!shortUrl) return res.sendStatus(404);
+
+        // Increment the click count
         await shortUrls.updateOne({ short: req.params.shortUrl }, { $inc: { clicks: 1 } });
+
         res.redirect(shortUrl.full);
     } catch (err) {
         res.status(500).send("Error processing the URL");

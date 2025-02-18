@@ -7,43 +7,34 @@
   <title>URL Shortener</title>
   <style>
     body {
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      color: white;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Poppins', sans-serif;
+      background-color: #f8f9fa;
+      color: black;
+      font-family: Arial, sans-serif;
+      padding: 20px;
     }
-    .container { max-width: 600px; }
-    .card {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      padding: 25px;
-      box-shadow: 0px 4px 15px rgba(255, 255, 255, 0.2);
+    .container {
+      max-width: 600px;
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     }
-    .form-control { border-radius: 30px; padding: 12px; font-size: 1rem; }
-    .btn-success {
-      border-radius: 30px;
-      padding: 12px 25px;
-      font-weight: bold;
-      transition: 0.3s ease-in-out;
+    .form-control, .btn {
+      margin-top: 10px;
     }
-    .btn-success:hover { background-color: #28a745; transform: scale(1.05); }
     table {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      overflow: hidden;
+      margin-top: 20px;
     }
-    th, td { text-align: center; padding: 10px; }
-    th { background-color: rgba(255, 255, 255, 0.2); }
-    a { color: #FFD700; font-weight: bold; text-decoration: none; transition: 0.3s ease-in-out; }
-    a:hover { color: #FFA500; text-decoration: underline; }
-    .btn-danger { border-radius: 20px; transition: 0.3s ease-in-out; }
-    .btn-danger:hover { background-color: #dc3545; transform: scale(1.1); }
-    .nav { margin-bottom: 20px; }
-    .nav a { margin-right: 10px; color: white; }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .nav a {
+      text-decoration: none;
+      color: #007bff;
+    }
   </style>
 </head>
 <body>
@@ -52,37 +43,27 @@
       <span>Welcome, <%= user.username %>!</span>
       <a href="/logout">Logout</a>
     </div>
-    <div class="card text-center">
-      <h1 class="mb-4">URL Shortener</h1>
-      <form action="/shortUrls" method="POST" class="d-flex">
-        <input required placeholder="Paste Your URL Here..." type="url" name="fullUrl" id="fullUrl" class="form-control me-2">
-        <button class="btn btn-success" type="submit">Shorten</button>
-      </form>
-      <table class="table table-dark table-hover mt-4">
-        <thead>
+    <h1 class="text-center">URL Shortener</h1>
+    <form action="/shortUrls" method="POST">
+      <input required placeholder="Paste Your URL Here..." type="url" name="fullUrl" id="fullUrl" class="form-control">
+      <button class="btn btn-primary" type="submit">Shorten</button>
+    </form>
+    <table class="table table-bordered mt-3">
+      <thead>
+        <tr>
+          <th>Full URL</th>
+          <th>Short URL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% shortUrls.forEach(shortUrl => { %>
           <tr>
-            <th>Full URL</th>
-            <th>Short URL</th>
-            <th>Clicks</th>
-            <th>Actions</th>
+            <td><a href="<%= shortUrl.full %>" target="_blank"><%= shortUrl.full %></a></td>
+            <td><a href="/<%= shortUrl.short %>"><%= shortUrl.short %></a></td>
           </tr>
-        </thead>
-        <tbody>
-          <% shortUrls.forEach(shortUrl => { %>
-            <tr>
-              <td><a href="<%= shortUrl.full %>" target="_blank"><%= shortUrl.full %></a></td>
-              <td><a href="/<%= shortUrl.short %>"><%= shortUrl.short %></a></td>
-              <td><%= shortUrl.clicks %></td>
-              <td>
-                <form action="/delete/<%= shortUrl._id.toString() %>" method="POST" style="display:inline;">
-                  <button class="btn btn-danger btn-sm">🗑 Delete</button>
-                </form>
-              </td>
-            </tr>
-          <% }) %>
-        </tbody>
-      </table>
-    </div>
+        <% }) %>
+      </tbody>
+    </table>
   </div>
 </body>
 </html>
